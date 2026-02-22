@@ -89,6 +89,11 @@ export default function TicketsPage() {
       setUploadError('Select a user and a file.');
       return;
     }
+    const maxFileSize = 4 * 1024 * 1024; // 4 MB
+    if (file.size > maxFileSize) {
+      setUploadError(`File too large. Max size ${Math.round(maxFileSize / 1024 / 1024)} MB.`);
+      return;
+    }
     setUploadError('');
     setUploadErrorDetail('');
     setUploading(true);
@@ -100,7 +105,20 @@ export default function TicketsPage() {
         body: formData,
         credentials: 'include',
       });
-      const uploadData = await uploadRes.json();
+      const text = await uploadRes.text();
+      let uploadData: { fileUrl?: string; error?: string } = {};
+      try {
+        if (text) uploadData = JSON.parse(text);
+      } catch {
+        if (uploadRes.status === 413) {
+          setUploadError('File too large. Max size 4 MB.');
+          setUploadErrorDetail('413 Request Entity Too Large');
+          return;
+        }
+        setUploadError(uploadRes.status >= 500 ? 'Server error. Try again later.' : 'Upload failed.');
+        setUploadErrorDetail(text.slice(0, 100) || uploadRes.statusText);
+        return;
+      }
       if (!uploadRes.ok) {
         setUploadError(uploadData.error || 'Upload failed');
         return;
@@ -128,7 +146,7 @@ export default function TicketsPage() {
       if (msg.includes('fetch') || msg.includes('Network')) {
         setUploadError('Network request failed. Check connection and try again.');
       } else if (msg.includes('JSON') || msg.includes('Unexpected')) {
-        setUploadError('Server returned invalid response (502/503?). Try again.');
+        setUploadError('File may be too large (max 4 MB) or server error. Try a smaller file.');
       } else {
         setUploadError(msg || 'Upload failed. Check console (F12).');
       }

@@ -20,7 +20,7 @@ const s3 =
       })
     : null;
 
-const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_SIZE = 4 * 1024 * 1024; // 4 MB (Vercel serverless body limit ~4.5 MB)
 const ALLOWED_TYPES = [
   'application/pdf',
   'image/jpeg',
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   }
   if (file.size > MAX_SIZE) {
     return NextResponse.json(
-      { error: 'File too large (max 10 MB)' },
+      { error: 'File too large (max 4 MB)' },
       { status: 400 }
     );
   }
