@@ -10,6 +10,7 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         <Link
           href="/dashboard/users"
+          className="dashboard-card"
           style={{
             display: 'block',
             padding: 'clamp(16px, 4vw, 20px)',
@@ -27,6 +28,7 @@ export default function DashboardPage() {
         </Link>
         <Link
           href="/dashboard/tickets"
+          className="dashboard-card"
           style={{
             display: 'block',
             padding: 'clamp(16px, 4vw, 20px)',

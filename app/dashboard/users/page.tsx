@@ -9,6 +9,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<keyof User | ''>('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -20,6 +22,21 @@ export default function UsersPage() {
         u.id.toLowerCase().includes(q)
     );
   }, [users, search]);
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    return [...filtered].sort((a, b) => {
+      const va = a[sortKey];
+      const vb = b[sortKey];
+      const cmp = String(va).localeCompare(String(vb), undefined, { numeric: true });
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [filtered, sortKey, sortDir]);
+
+  function toggleSort(key: keyof User) {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir('asc'); }
+  }
 
   function loadUsers() {
     setError('');
@@ -85,14 +102,14 @@ export default function UsersPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 320 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #27272a' }}>
-              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>Email</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>Role</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>Created</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>User ID</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('email')}>Email {sortKey === 'email' && (sortDir === 'asc' ? '↑' : '↓')}</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('role')}>Role {sortKey === 'role' && (sortDir === 'asc' ? '↑' : '↓')}</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('created_at')}>Created {sortKey === 'created_at' && (sortDir === 'asc' ? '↑' : '↓')}</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('id')}>User ID {sortKey === 'id' && (sortDir === 'asc' ? '↑' : '↓')}</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((u) => (
+            {sorted.map((u) => (
               <tr key={u.id} style={{ borderBottom: '1px solid #27272a' }}>
                 <td style={{ padding: '12px 16px', fontSize: 14 }}>{u.email}</td>
                 <td style={{ padding: '12px 16px', fontSize: 14 }}>
