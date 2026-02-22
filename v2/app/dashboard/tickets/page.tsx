@@ -25,12 +25,29 @@ export default function TicketsPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userSearch, setUserSearch] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [sortKey, setSortKey] = useState<keyof Ticket | ''>('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const filteredUsers = useMemo(() => {
     const q = userSearch.trim().toLowerCase();
     if (!q) return users;
     return users.filter((u) => u.email.toLowerCase().includes(q));
   }, [users, userSearch]);
+
+  const sortedTickets = useMemo(() => {
+    if (!sortKey) return tickets;
+    return [...tickets].sort((a, b) => {
+      const va = a[sortKey];
+      const vb = b[sortKey];
+      const cmp = String(va).localeCompare(String(vb), undefined, { numeric: true });
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [tickets, sortKey, sortDir]);
+
+  function toggleSort(key: keyof Ticket) {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir('asc'); }
+  }
 
   function loadData() {
     setError('');
@@ -152,7 +169,7 @@ export default function TicketsPage() {
                     }}
                   >
                     <span style={{ display: 'block' }}>{u.email}</span>
-                    <span style={{ fontSize: 12, color: '#94a3b8', fontFamily: 'monospace' }}>ID: {u.id.slice(0, 8)}…</span>
+                    <span style={{ fontSize: 12, color: '#94a3b8', fontFamily: 'monospace', wordBreak: 'break-all' }}>ID: {u.id}</span>
                     {u.role === 'admin' && <span style={{ marginLeft: 8, fontSize: 12, color: '#facc15' }}>admin</span>}
                   </button>
                 ))
@@ -161,7 +178,7 @@ export default function TicketsPage() {
             {selectedUser && (
               <p style={{ marginTop: 8, fontSize: 13, color: '#94a3b8' }}>
                 Selected: <strong style={{ color: '#f8fafc' }}>{selectedUser.email}</strong>
-                <span style={{ marginLeft: 8, fontFamily: 'monospace', fontSize: 12 }}>(ID: {selectedUser.id.slice(0, 8)}…)</span>
+                <span style={{ marginLeft: 8, fontFamily: 'monospace', fontSize: 12, wordBreak: 'break-all' }}>(ID: {selectedUser.id})</span>
               </p>
             )}
           </div>
@@ -191,17 +208,17 @@ export default function TicketsPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 320 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #334155' }}>
-              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, color: '#f8fafc' }}>User</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, color: '#f8fafc' }}>User ID</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, color: '#f8fafc', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('user_email')}>User {sortKey === 'user_email' && (sortDir === 'asc' ? '↑' : '↓')}</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, color: '#f8fafc', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('user_id')}>User ID {sortKey === 'user_id' && (sortDir === 'asc' ? '↑' : '↓')}</th>
               <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, color: '#f8fafc' }}>File</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, color: '#f8fafc' }}>Created</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14, color: '#f8fafc', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('created_at')}>Created {sortKey === 'created_at' && (sortDir === 'asc' ? '↑' : '↓')}</th>
             </tr>
           </thead>
           <tbody>
-            {tickets.map((t) => (
+            {sortedTickets.map((t) => (
               <tr key={t.id} style={{ borderBottom: '1px solid #334155' }} className="ticket-row">
                 <td style={{ padding: '12px 16px', fontSize: 14, color: '#f8fafc' }}>{t.user_email}</td>
-                <td style={{ padding: '12px 16px', fontSize: 12, color: '#94a3b8', fontFamily: 'monospace' }}>{t.user_id.slice(0, 8)}…</td>
+                <td style={{ padding: '12px 16px', fontSize: 12, color: '#94a3b8', fontFamily: 'monospace', wordBreak: 'break-all', maxWidth: 280 }}>{t.user_id}</td>
                 <td style={{ padding: '12px 16px', fontSize: 14 }}>
                   <a href={fileViewUrl(t.file_url)} target="_blank" rel="noopener noreferrer" style={{ wordBreak: 'break-all', color: '#facc15' }}>View file</a>
                 </td>
