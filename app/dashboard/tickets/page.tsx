@@ -65,7 +65,7 @@ export default function TicketsPage() {
         }
       })
       .catch((e) => {
-        const msg = e?.message ?? String(e);
+        const msg = e instanceof Error ? e.message : String(e);
         setErrorDetail(msg);
         if (msg.startsWith('Tickets API:') || msg.startsWith('Users API:')) {
           setError(msg);
@@ -123,7 +123,7 @@ export default function TicketsPage() {
       if (Array.isArray(list)) setTickets(list);
       setFile(null);
     } catch (e) {
-      const msg = e?.message ?? String(e);
+      const msg = e instanceof Error ? e.message : String(e);
       setUploadErrorDetail(msg);
       if (msg.includes('fetch') || msg.includes('Network')) {
         setUploadError('Network request failed. Check connection and try again.');
