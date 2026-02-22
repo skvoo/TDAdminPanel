@@ -21,26 +21,39 @@ export default function UsersPage() {
     );
   }, [users, search]);
 
-  useEffect(() => {
+  function loadUsers() {
+    setError('');
+    setLoading(true);
     fetch('/api/users', { credentials: 'include' })
       .then((r) => {
-        if (!r.ok) throw new Error('Failed to load users');
+        if (!r.ok) throw new Error(r.status === 401 ? 'Session expired. Please log in again.' : `Failed to load (${r.status})`);
         return r.json();
       })
       .then(setUsers)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(e.message || 'Network error. Check connection and try again.'))
       .finally(() => setLoading(false));
-  }, []);
+  }
 
-  if (loading) {
+  useEffect(() => { loadUsers(); }, []);
+
+  if (loading && users.length === 0) {
     return <p style={{ color: '#71717a' }}>Loading users…</p>;
   }
-  if (error) {
-    return <div style={{ color: '#fca5a5' }}>{error}</div>;
+  if (error && users.length === 0) {
+    return (
+      <div style={{ padding: 12, background: 'rgba(239,68,68,0.15)', color: '#fca5a5', borderRadius: 8 }}>
+        {error}
+      </div>
+    );
   }
 
   return (
-    <div style={{ maxWidth: 960 }}>
+    <div style={{ maxWidth: 960, width: '100%' }}>
+      {error && (
+        <div style={{ marginBottom: 16, padding: 12, background: 'rgba(239,68,68,0.15)', color: '#fca5a5', borderRadius: 8, fontSize: 14 }}>
+          {error}
+        </div>
+      )}
       <h1 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 700, marginBottom: 8 }}>Users</h1>
       <p style={{ color: '#71717a', marginBottom: 24, fontSize: 14 }}>
         All users in the TD database.
@@ -75,7 +88,7 @@ export default function UsersPage() {
               <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>Email</th>
               <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>Role</th>
               <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>Created</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>ID</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>User ID</th>
             </tr>
           </thead>
           <tbody>
@@ -97,8 +110,8 @@ export default function UsersPage() {
                 <td style={{ padding: '12px 16px', fontSize: 14, color: '#a1a1aa' }}>
                   {new Date(u.created_at).toLocaleString()}
                 </td>
-                <td style={{ padding: '12px 16px', fontSize: 12, color: '#71717a', fontFamily: 'monospace' }}>
-                  {u.id.slice(0, 8)}…
+                <td style={{ padding: '12px 16px', fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace', wordBreak: 'break-all' }} title={u.id}>
+                  {u.id}
                 </td>
               </tr>
             ))}

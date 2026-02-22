@@ -22,8 +22,10 @@ export default function TicketsPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [errorDetail, setErrorDetail] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [uploadErrorDetail, setUploadErrorDetail] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userSearch, setUserSearch] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -34,10 +36,25 @@ export default function TicketsPage() {
     return users.filter((u) => u.email.toLowerCase().includes(q));
   }, [users, userSearch]);
 
-  useEffect(() => {
+  function loadData() {
+    setError('');
+    setErrorDetail('');
+    setLoading(true);
     Promise.all([
-      fetch('/api/tickets', { credentials: 'include' }).then((r) => r.json()),
-      fetch('/api/users', { credentials: 'include' }).then((r) => r.json()),
+      fetch('/api/tickets', { credentials: 'include' }).then(async (r) => {
+        if (!r.ok) {
+          const text = await r.text();
+          throw new Error(`Tickets API: ${r.status} ${r.statusText}${text ? ` — ${text.slice(0, 80)}` : ''}`);
+        }
+        return r.json();
+      }),
+      fetch('/api/users', { credentials: 'include' }).then(async (r) => {
+        if (!r.ok) {
+          const text = await r.text();
+          throw new Error(`Users API: ${r.status} ${r.statusText}${text ? ` — ${text.slice(0, 80)}` : ''}`);
+        }
+        return r.json();
+      }),
     ])
       .then(([t, u]) => {
         if (Array.isArray(t)) setTickets(t);
@@ -47,9 +64,24 @@ export default function TicketsPage() {
           if (u.length && !selectedUser) setSelectedUser(u[0]);
         }
       })
-      .catch(() => setError('Network error'))
+      .catch((e) => {
+        const msg = e?.message ?? String(e);
+        setErrorDetail(msg);
+        if (msg.startsWith('Tickets API:') || msg.startsWith('Users API:')) {
+          setError(msg);
+        } else if (msg.includes('fetch') || msg.includes('Network')) {
+          setError('Network request failed. Check connection, VPN, or try again.');
+        } else if (msg.includes('JSON') || msg.includes('Unexpected token')) {
+          setError('Server returned non-JSON (possibly 502/503). Try again or check Vercel.');
+        } else {
+          setError(msg || 'Unknown error. Check console (F12) for details.');
+        }
+        console.error('[Tickets loadData]', e);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { loadData(); }, []);
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
@@ -58,6 +90,7 @@ export default function TicketsPage() {
       return;
     }
     setUploadError('');
+    setUploadErrorDetail('');
     setUploading(true);
     try {
       const formData = new FormData();
@@ -89,23 +122,42 @@ export default function TicketsPage() {
       const list = await fetch('/api/tickets', { credentials: 'include' }).then((r) => r.json());
       if (Array.isArray(list)) setTickets(list);
       setFile(null);
-    } catch {
-      setUploadError('Network error');
+    } catch (e) {
+      const msg = e?.message ?? String(e);
+      setUploadErrorDetail(msg);
+      if (msg.includes('fetch') || msg.includes('Network')) {
+        setUploadError('Network request failed. Check connection and try again.');
+      } else if (msg.includes('JSON') || msg.includes('Unexpected')) {
+        setUploadError('Server returned invalid response (502/503?). Try again.');
+      } else {
+        setUploadError(msg || 'Upload failed. Check console (F12).');
+      }
+      console.error('[Tickets upload]', e);
     } finally {
       setUploading(false);
     }
   }
 
-  if (loading) {
+  if (loading && tickets.length === 0 && users.length === 0) {
     return <p style={{ color: '#71717a' }}>Loading…</p>;
   }
 
   return (
-    <div style={{ maxWidth: 960 }}>
+    <div style={{ maxWidth: 960, width: '100%' }}>
       <h1 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 700, marginBottom: 8 }}>Tickets</h1>
       <p style={{ color: '#71717a', marginBottom: 24, fontSize: 14 }}>
         Files are visible only in the admin panel. Upload stores in MinIO (bucket <code style={{ background: '#27272a', padding: '2px 6px', borderRadius: 4 }}>td-tickets</code>).
       </p>
+      {error && (
+        <div style={{ marginBottom: 16, padding: 12, background: 'rgba(239,68,68,0.15)', color: '#fca5a5', borderRadius: 8, fontSize: 14 }}>
+          <div style={{ marginBottom: errorDetail ? 6 : 0 }}>{error}</div>
+          {errorDetail && (
+            <div style={{ fontSize: 12, color: '#f87171', wordBreak: 'break-all' }} title={errorDetail}>
+              Source: {errorDetail}
+            </div>
+          )}
+        </div>
+      )}
 
       <div
         style={{
@@ -120,7 +172,12 @@ export default function TicketsPage() {
         <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {uploadError && (
             <div style={{ background: 'rgba(239,68,68,0.15)', color: '#fca5a5', padding: 10, borderRadius: 8, fontSize: 14 }}>
-              {uploadError}
+              <div>{uploadError}</div>
+              {uploadErrorDetail && (
+                <div style={{ fontSize: 12, color: '#f87171', wordBreak: 'break-all', marginTop: 6 }} title={uploadErrorDetail}>
+                  Source: {uploadErrorDetail}
+                </div>
+              )}
             </div>
           )}
 
@@ -161,7 +218,8 @@ export default function TicketsPage() {
                       cursor: 'pointer',
                     }}
                   >
-                    {u.email}
+                    <span style={{ display: 'block' }}>{u.email}</span>
+                    <span style={{ fontSize: 12, color: '#71717a', fontFamily: 'monospace' }}>ID: {u.id.slice(0, 8)}…</span>
                     {u.role === 'admin' && (
                       <span style={{ marginLeft: 8, fontSize: 12, color: '#a78bfa' }}>admin</span>
                     )}
@@ -172,6 +230,7 @@ export default function TicketsPage() {
             {selectedUser && (
               <p style={{ marginTop: 8, fontSize: 13, color: '#a1a1aa' }}>
                 Selected: <strong style={{ color: '#e4e4e7' }}>{selectedUser.email}</strong>
+                <span style={{ marginLeft: 8, fontFamily: 'monospace', fontSize: 12 }}>(ID: {selectedUser.id.slice(0, 8)}…)</span>
               </p>
             )}
           </div>
@@ -210,21 +269,21 @@ export default function TicketsPage() {
         </form>
       </div>
 
-      {error && <div style={{ color: '#fca5a5', marginBottom: 16 }}>{error}</div>}
-
-      <div style={{ overflowX: 'auto', background: '#18181b', border: '1px solid #27272a', borderRadius: 12 }}>
+      <div className="tickets-table-wrap" style={{ overflowX: 'auto', background: '#18181b', border: '1px solid #27272a', borderRadius: 12 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 320 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #27272a' }}>
               <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>User</th>
+              <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>User ID</th>
               <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>File</th>
               <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, fontSize: 14 }}>Created</th>
             </tr>
           </thead>
           <tbody>
             {tickets.map((t) => (
-              <tr key={t.id} style={{ borderBottom: '1px solid #27272a' }}>
+              <tr key={t.id} style={{ borderBottom: '1px solid #27272a' }} className="ticket-row">
                 <td style={{ padding: '12px 16px', fontSize: 14 }}>{t.user_email}</td>
+                <td style={{ padding: '12px 16px', fontSize: 12, color: '#71717a', fontFamily: 'monospace' }}>{t.user_id.slice(0, 8)}…</td>
                 <td style={{ padding: '12px 16px', fontSize: 14 }}>
                   <a
                     href={fileViewUrl(t.file_url)}
