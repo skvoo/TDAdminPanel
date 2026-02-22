@@ -4,6 +4,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'TD Admin Panel',
   description: 'Ticket Defender admin panel',
+  viewport: { width: 'device-width', initialScale: 1, maximumScale: 5 },
 };
 
 export default function RootLayout({

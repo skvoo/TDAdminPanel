@@ -4,7 +4,6 @@ import { getSession, isAdmin } from '@/lib/auth';
 
 const endpoint = process.env.S3_ENDPOINT;
 const bucket = process.env.S3_BUCKET;
-const publicBase = process.env.S3_PUBLIC_URL;
 const accessKey = process.env.S3_ACCESS_KEY;
 const secretKey = process.env.S3_SECRET_KEY;
 
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
   if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  if (!s3 || !bucket || !publicBase) {
+  if (!s3 || !bucket) {
     return NextResponse.json(
       { error: 'Upload service not configured' },
       { status: 503 }
@@ -80,6 +79,6 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-  const fileUrl = `${publicBase}/${key}`;
+  const fileUrl = `/api/file?key=${encodeURIComponent(key)}`;
   return NextResponse.json({ fileUrl });
 }

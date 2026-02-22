@@ -43,11 +43,32 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). You will be redirected to `/login`. Sign in with an admin user from the `td.users` table (password must be bcrypt-hashed).
 
+## First login / Create admin user
+
+Only users with `role = 'admin'` in `td.users` can sign in.
+
+**Option A — from your machine (if it can reach the DB):**  
+With `.env` containing `DATABASE_URL`:
+
+```bash
+node scripts/create-admin.js your@email.com YourPassword
+```
+
+**Option B — via SSH to server (login `st`, key-based):**  
+Generates SQL with bcrypt hash, then copies it to the server and runs `psql` there:
+
+```powershell
+node scripts/create-admin-remote.js admin@td.local TdAdminPanel1
+.\scripts\create-admin-via-ssh.ps1
+```
+
+Default credentials: **admin@td.local** / **TdAdminPanel1**. Then sign in at the app login page.
+
 ## Deploy on Vercel
 
 1. Push the project to GitHub (or connect another Git provider).
 2. In [Vercel](https://vercel.com): **Add New Project** → Import this repo.
-3. Add all environment variables above (Production and optionally Preview).
+3. **Environment variables**: copy `.env.vercel.example` to a local `.env`, fill in real values, then in Vercel go to **Project → Settings → Environment Variables → Import** and upload your `.env` (or add each variable manually). Do not commit `.env`.
 4. Deploy. After deployment, redeploy if you change env vars so serverless functions get the new values.
 
 No extra build settings are required; `vercel.json` is optional. Vercel detects Next.js automatically.
