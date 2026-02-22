@@ -10,7 +10,24 @@ html, body {
 }
 
 a { color: #facc15; text-decoration: none; transition: color 0.15s ease; }
-a:hover { color: #facc15; text-decoration: underline; }
+a:hover { color: #facc15; text-decoration: none; }
+
+.dashboard-header a {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.dashboard-header a:hover {
+  color: #facc15;
+  text-decoration: none;
+}
+.dashboard-header .nav-label {
+  color: #94a3b8;
+  transition: color 0.15s ease;
+}
+.dashboard-header a:hover .nav-label {
+  color: #facc15 !important;
+}
 
 .dashboard-card {
   transition: background-color 0.15s ease, border-color 0.15s ease;

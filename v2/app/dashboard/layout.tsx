@@ -6,6 +6,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0f172a' }}>
       <header
+        className="dashboard-header"
         style={{
           borderBottom: '1px solid #334155',
           padding: '12px 16px',
@@ -19,12 +20,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Image src="/logo.png" alt="Ticket Defenders" width={120} height={44} style={{ objectFit: 'contain' }} />
-          <span style={{ color: '#94a3b8', fontSize: 14 }}>Admin</span>
+          <span className="nav-label" style={{ fontSize: 14 }}>Admin</span>
         </Link>
         <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-          <Link href="/dashboard" style={{ color: '#94a3b8', fontSize: 14 }}>Dashboard</Link>
-          <Link href="/dashboard/users" style={{ color: '#94a3b8', fontSize: 14 }}>Users</Link>
-          <Link href="/dashboard/tickets" style={{ color: '#94a3b8', fontSize: 14 }}>Tickets</Link>
+          <Link href="/dashboard" style={{ fontSize: 14 }}>Dashboard</Link>
+          <Link href="/dashboard/users" style={{ fontSize: 14 }}>Users</Link>
+          <Link href="/dashboard/tickets" style={{ fontSize: 14 }}>Tickets</Link>
           <LogoutButton />
         </nav>
       </header>
