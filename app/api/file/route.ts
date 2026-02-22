@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Empty object' }, { status: 404 });
     }
     const buf = await body.transformToByteArray();
-    return new NextResponse(buf, {
+    return new NextResponse(Buffer.from(buf), {
       headers: {
         'Content-Type': contentType,
         'Content-Disposition': `inline; filename="${objectKey.split('/').pop()}"`,
