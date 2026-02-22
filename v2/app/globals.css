@@ -19,12 +19,12 @@ a:hover { color: #facc15; text-decoration: underline; }
   transition: color 0.15s ease;
 }
 .dashboard-card:hover {
-  background: #334155;
-  border-color: #475569;
+  background: #334155 !important;
+  border-color: #475569 !important;
 }
 .dashboard-card:hover strong,
 .dashboard-card:hover p {
-  color: #facc15;
+  color: #facc15 !important;
 }
 
 button { cursor: pointer; font: inherit; }
