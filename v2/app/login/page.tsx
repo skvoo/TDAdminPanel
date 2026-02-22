@@ -1,0 +1,101 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || 'Login failed');
+        return;
+      }
+      router.push('/dashboard');
+      router.refresh();
+    } catch {
+      setError('Network error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(16px, 5vw, 24px)', background: '#0f172a' }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <Image src="/logo.png" alt="Ticket Defenders" width={180} height={80} style={{ objectFit: 'contain' }} priority />
+          <p style={{ color: '#94a3b8', marginTop: 12, fontSize: 14 }}>Admin Panel</p>
+        </div>
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            background: '#1e293b',
+            borderRadius: 12,
+            padding: 24,
+            border: '1px solid #334155',
+          }}
+        >
+          {error && (
+            <div style={{ background: 'rgba(239,68,68,0.2)', color: '#fca5a5', padding: '10px 12px', borderRadius: 8, marginBottom: 16, fontSize: 14 }}>
+              {error}
+            </div>
+          )}
+          <label style={{ display: 'block', marginBottom: 16 }}>
+            <span style={{ display: 'block', marginBottom: 6, fontSize: 14, color: '#94a3b8' }}>Email</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #334155', background: '#0f172a', color: '#f8fafc' }}
+            />
+          </label>
+          <label style={{ display: 'block', marginBottom: 20 }}>
+            <span style={{ display: 'block', marginBottom: 6, fontSize: 14, color: '#94a3b8' }}>Password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #334155', background: '#0f172a', color: '#f8fafc' }}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: 12,
+              borderRadius: 8,
+              border: 'none',
+              background: '#facc15',
+              color: '#0f172a',
+              fontWeight: 600,
+              opacity: loading ? 0.7 : 1,
+            }}
+          >
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
